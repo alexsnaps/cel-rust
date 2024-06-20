@@ -301,6 +301,16 @@ pub fn map(
             }
             Value::List(Arc::new(values))
         }
+        Value::Map(map) => {
+            let mut values = Vec::with_capacity(map.map.len());
+            let mut ptx = ftx.ptx.new_inner_scope();
+            for item in map.map.keys() {
+                ptx.add_variable_from_value(ident.clone(), item.clone());
+                let value = ptx.resolve(&expr)?;
+                values.push(value);
+            }
+            Value::List(Arc::new(values))
+        }
         _ => return Err(this.error_expected_type(ValueType::List)),
     }
     .into()
@@ -589,6 +599,7 @@ mod tests {
                 "nested map",
                 "[[1, 2], [2, 3]].map(x, x.map(x, x * 2)) == [[2, 4], [4, 6]]",
             ),
+            ("map map", "{1: 'a', 2: 'b'}.map(k, k) == [1, 2]"),
         ]
         .iter()
         .for_each(assert_script);
